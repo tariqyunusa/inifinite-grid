@@ -1,8 +1,8 @@
-import * as THREE from 'three'
-import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
-import { useRef, useState, useMemo, useEffect, act } from 'react'
-import gsap from 'gsap'
-import './App.css'
+import * as THREE from 'three';
+import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
+import { useRef, useState, useMemo, useEffect } from 'react';
+import gsap from 'gsap';
+import './App.css';
 
 const images = [
   '/gr-1.jpg', '/gr-2.jpg', '/gr-3.jpg',
@@ -10,38 +10,26 @@ const images = [
   '/wt-1.jpg', '/wt-2.jpg', '/wt-3.jpg', '/jp-1.jpg'
 ];
 
-const GridImage = ({ position, texture, onClick, isActive, isHidden, centerPosition }) => {
+const GridImage = ({ position, texture, onClick, isActive, isHidden }) => {
   const ref = useRef();
-  const {innerWidth, innerHeight} = window
-  const centerWidth = innerWidth /2
-  const centerHeight = innerHeight / 2
 
   useEffect(() => {
     if (ref.current) {
-      
       gsap.to(ref.current.position, {
-        x: isActive ? centerPosition[0] : isHidden ? position[0] * 5 : position[0],
-        y: isActive ? centerPosition[1] : isHidden ? position[1] * 5 : position[1],
+        x: isActive ? position[0] : isHidden ? position[0] * 3 : position[0], 
+        y: isActive ? position[1] : isHidden ? position[1] * 3 : position[1], 
         z: isActive ? 2 : position[2],
         duration: 0.8,
         ease: "power3.out"
       });
 
-      gsap.to(ref.current.scale, {
-        x: isActive ? 1.5 : 1,
-        y: isActive ? 1.5 : 1,
-        duration: 0.8,
-        ease: "power3.out"
-      });
-
-     
       gsap.to(ref.current.material, {
-        opacity: isHidden ? 0 : 1,
+        opacity: isHidden ? 0 : 1, 
         duration: 0.8,
         ease: "power3.out"
       });
     }
-  }, [isActive, isHidden, position, centerPosition]);
+  }, [isActive, isHidden, position]);
 
   return (
     <mesh ref={ref} position={position} onClick={onClick}>
@@ -51,14 +39,11 @@ const GridImage = ({ position, texture, onClick, isActive, isHidden, centerPosit
   );
 };
 
+
 const InfiniteGrid = ({ mouse }) => {
   const gridRef = useRef();
   const textures = useLoader(THREE.TextureLoader, images);
-  const { camera, viewport } = useThree();
   const [activeIndex, setActiveIndex] = useState(null);
-
- 
-  const centerPosition = [camera.position.x, camera.position.y, 0];
 
   const grid = useMemo(() => {
     const gridSize = 15;
@@ -76,7 +61,6 @@ const InfiniteGrid = ({ mouse }) => {
     return gridData;
   }, [textures]);
 
-
   useFrame(() => {
     if (gridRef.current && activeIndex === null) {
       gsap.to(gridRef.current.position, {
@@ -88,14 +72,31 @@ const InfiniteGrid = ({ mouse }) => {
     }
   });
 
-  const handleImageClick = (index) => {
-   
-    
-    if (activeIndex === index) {
-      setActiveIndex(null); // Reset grid movement
+  useEffect(() => {
+    if (activeIndex !== null) {
+      const { position } = grid[activeIndex];
+
+      gsap.to(gridRef.current.position, {
+        x: -position[0],
+        y: -position[1],
+        z: 0,
+        duration: 0.8,
+        ease: "power3.out"
+      });
+
     } else {
-      setActiveIndex(index);
+      gsap.to(gridRef.current.position, {
+        x: 0,
+        y: 0,
+        z: 0,
+        duration: 0.8,
+        ease: "power3.out"
+      });
     }
+  }, [activeIndex, grid]);
+
+  const handleImageClick = (index) => {
+    setActiveIndex(activeIndex === index ? null : index);
   };
 
   return (
@@ -108,12 +109,12 @@ const InfiniteGrid = ({ mouse }) => {
           onClick={() => handleImageClick(idx)}
           isActive={activeIndex === idx}
           isHidden={activeIndex !== null && activeIndex !== idx}
-          centerPosition={centerPosition} 
         />
       ))}
     </group>
   );
 };
+
 
 
 
